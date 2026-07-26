@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{.Brand.Name}} — Infrastructure Report — {{.Report.Period.Label}}</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    margin: 0;
+    font: 10.5pt/1.45 "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #111827;
+    background: #fff;
+  }
+  .doc { max-width: 190mm; margin: 0 auto; padding: 8mm 0; }
+  h1, h2, h3, h4 { margin: 0 0 .4em; line-height: 1.2; }
+  h1 { font-size: 26pt; letter-spacing: -.01em; }
+  h2 { font-size: 15pt; padding-bottom: .3em; border-bottom: 2px solid var(--brand); }
+  h3 { font-size: 11.5pt; }
+  h4 { font-size: 10.5pt; }
+  p { margin: 0 0 .7em; }
+  a { color: var(--accent); }
+  .muted { color: #6B7280; }
+  .cover { padding: 24mm 0 10mm; border-bottom: 4px solid var(--brand); margin-bottom: 8mm; }
+  .cover .logo { max-height: 22mm; max-width: 70mm; margin-bottom: 8mm; display: block; }
+  .cover .tenant { font-size: 13pt; font-weight: 600; color: var(--brand); }
+  .cover .meta { margin-top: 6mm; font-size: 10pt; }
+  .cover .meta div { margin-bottom: .25em; }
+  section { margin-bottom: 9mm; page-break-inside: auto; }
+  .kpis { display: flex; flex-wrap: wrap; gap: 4mm; margin: 5mm 0 7mm; }
+  .kpi {
+    flex: 1 1 38mm; min-width: 38mm; padding: 4mm;
+    border: 1px solid #E5E7EB; border-left: 3px solid var(--brand); border-radius: 2px;
+  }
+  .kpi .label { font-size: 8pt; text-transform: uppercase; letter-spacing: .06em; color: #6B7280; }
+  .kpi .value { font-size: 15pt; font-weight: 700; margin-top: 1mm; }
+  .kpi .value.up { color: #B91C1C; }
+  .kpi .value.down { color: #15803D; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 5mm; font-size: 9.5pt; }
+  th, td { text-align: left; padding: 2mm 2.5mm; border-bottom: 1px solid #E5E7EB; vertical-align: top; }
+  th { font-size: 8pt; text-transform: uppercase; letter-spacing: .05em; color: #6B7280; border-bottom: 1.5px solid #D1D5DB; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .finding { border: 1px solid #E5E7EB; border-radius: 2px; padding: 3.5mm 4mm; margin-bottom: 3mm; page-break-inside: avoid; }
+  .finding .head { display: flex; gap: 3mm; align-items: baseline; }
+  .finding .title { font-weight: 600; flex: 1; }
+  .finding .body { margin-top: 1.5mm; }
+  .finding dl { display: grid; grid-template-columns: 32mm 1fr; gap: .5mm 2mm; margin: 2mm 0 0; font-size: 9pt; }
+  .finding dt { color: #6B7280; }
+  .finding dd { margin: 0; word-break: break-word; }
+  .rec { margin-top: 2mm; padding-left: 3mm; border-left: 2px solid var(--accent); font-size: 9.5pt; }
+  .badge {
+    display: inline-block; padding: .4mm 2mm; border-radius: 2px;
+    font-size: 7.5pt; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    color: #fff; white-space: nowrap;
+  }
+  .sev-critical { background: #991B1B; }
+  .sev-high     { background: #C2410C; }
+  .sev-medium   { background: #A16207; }
+  .sev-low      { background: #4B5563; }
+  .sev-info     { background: #6B7280; }
+  .tag { display: inline-block; padding: .4mm 2mm; border: 1px solid #D1D5DB; border-radius: 2px; font-size: 7.5pt; color: #4B5563; text-transform: uppercase; letter-spacing: .04em; }
+  .tag.new { border-color: var(--accent); color: var(--accent); }
+  .cost { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+  .narrative { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 2px; padding: 5mm; }
+  .narrative h3, .narrative h4 { margin-top: .6em; }
+  .narrative ul { margin: 0 0 .7em; padding-left: 5mm; }
+  .empty { color: #6B7280; font-style: italic; }
+  footer { margin-top: 10mm; padding-top: 3mm; border-top: 1px solid #E5E7EB; font-size: 8.5pt; color: #6B7280; }
+  .ok { color: #15803D; }
+  .bad { color: #B91C1C; }
+</style>
+</head>
+<body>
+<div class="doc" style="--brand: {{.Brand.PrimaryColor}}; --accent: {{.Brand.AccentColor}}">
+
+  <header class="cover">
+    {{with .Brand.LogoDataURI}}<img class="logo" src="{{.}}" alt="{{$.Brand.Name}}">{{end}}
+    <div class="tenant">{{.Brand.Name}}</div>
+    <h1>Infrastructure Report</h1>
+    <div class="muted">{{.Report.Period.Label}}</div>
+    <div class="meta">
+      <div><strong>Account:</strong> {{with .Report.Account.Label}}{{.}} — {{end}}{{upper .Report.Account.Provider}} {{.Report.Account.ID}}</div>
+      <div><strong>Period:</strong> {{date .Report.Period.Start}} to {{date .Report.Period.End}}</div>
+      <div><strong>Prepared:</strong> {{date .Report.GeneratedAt}}</div>
+      {{with .Brand.Contact}}<div><strong>Contact:</strong> {{.}}</div>{{end}}
+    </div>
+  </header>
+
+  <section>
+    <h2>Summary</h2>
+    <div class="kpis">
+      <div class="kpi">
+        <div class="label">Spend this period</div>
+        <div class="value">{{usd .Report.Cost.CurrentUSD}}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Change vs previous</div>
+        <div class="value {{trend .Report.Cost.DeltaUSD}}">{{signedUSD .Report.Cost.DeltaUSD}}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Identified waste / month</div>
+        <div class="value">{{usd .Report.IdentifiedWasteUSD}}</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Open findings</div>
+        <div class="value">{{len .Report.Findings}}</div>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th>Severity</th><th class="num">Findings</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge sev-critical">critical</span></td><td class="num">{{count .Counts "critical"}}</td></tr>
+        <tr><td><span class="badge sev-high">high</span></td><td class="num">{{count .Counts "high"}}</td></tr>
+        <tr><td><span class="badge sev-medium">medium</span></td><td class="num">{{count .Counts "medium"}}</td></tr>
+        <tr><td><span class="badge sev-low">low</span></td><td class="num">{{count .Counts "low"}}</td></tr>
+        <tr><td><span class="badge sev-info">info</span></td><td class="num">{{count .Counts "info"}}</td></tr>
+      </tbody>
+    </table>
+
+    {{with .Report.Delta}}
+    <h3>Movement since {{if .PreviousPeriod}}{{.PreviousPeriod}}{{else}}the previous report{{end}}</h3>
+    <p>
+      <strong>{{.New}}</strong> new, <strong>{{.Open}}</strong> still open,
+      <strong class="ok">{{.Resolved}}</strong> resolved{{if gt .ResolvedSavings 0.0}},
+      removing <strong class="ok">{{usd .ResolvedSavings}}</strong> of recurring monthly spend{{end}}.
+    </p>
+    {{if .ResolvedList}}
+    <table>
+      <thead><tr><th>Resolved since last report</th><th class="num">Monthly saving</th></tr></thead>
+      <tbody>
+      {{range .ResolvedList}}
+        <tr><td>{{.Title}}</td><td class="num">{{if gt .MonthlyCostUSD 0.0}}{{usd .MonthlyCostUSD}}{{else}}—{{end}}</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{end}}
+    {{end}}
+  </section>
+
+  {{with .Narrative}}
+  <section>
+    <h2>What changed and what we recommend</h2>
+    <div class="narrative">{{.}}</div>
+  </section>
+  {{end}}
+
+  {{range .Sections}}
+  <section>
+    <h2>{{.Title}}</h2>
+
+    {{if eq .Key "cost"}}
+      {{with $.TopMovers}}
+      <h3>Largest spend movements</h3>
+      <table>
+        <thead><tr><th>Service</th><th class="num">This period</th><th class="num">Previous</th><th class="num">Change</th><th class="num">%</th></tr></thead>
+        <tbody>
+        {{range .}}
+          <tr>
+            <td>{{.Service}}</td>
+            <td class="num">{{usd .CurrentUSD}}</td>
+            <td class="num">{{usd .PreviousUSD}}</td>
+            <td class="num {{trend .DeltaUSD}}">{{signedUSD .DeltaUSD}}</td>
+            <td class="num">{{if .PreviousUSD}}{{pct .DeltaPct}}{{else}}new{{end}}</td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{end}}
+
+      {{with $.TopWaste}}
+      <h3>Top waste items</h3>
+      <table>
+        <thead><tr><th>Item</th><th>Resource</th><th class="num">Monthly</th></tr></thead>
+        <tbody>
+        {{range .}}
+          <tr><td>{{.Title}}</td><td class="muted">{{.Resource.Ref}}</td><td class="num cost">{{usd .MonthlyCostUSD}}</td></tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{end}}
+    {{end}}
+
+    {{if eq .Key "reliability"}}
+      {{with $.Report.SLOs}}
+      <h3>Service level attainment</h3>
+      <table>
+        <thead><tr><th>Endpoint</th><th class="num">Objective</th><th class="num">Attained</th><th class="num">Error budget</th><th class="num">Downtime</th></tr></thead>
+        <tbody>
+        {{range .}}
+          <tr>
+            <td>{{.Endpoint}}</td>
+            <td class="num">{{pct3 .ObjectivePct}}</td>
+            <td class="num {{if .Met}}ok{{else}}bad{{end}}">{{pct3 .AttainmentPct}}</td>
+            <td class="num {{if lt .ErrorBudgetPct 0.0}}bad{{end}}">{{pct .ErrorBudgetPct}}</td>
+            <td class="num">{{printf "%.0f min" .DowntimeMin}}</td>
+          </tr>
+        {{end}}
+        </tbody>
+      </table>
+      {{end}}
+    {{end}}
+
+    <h3>Findings</h3>
+    {{if .Findings}}
+      {{range .Findings}}
+      <article class="finding">
+        <div class="head">
+          <span class="badge sev-{{.Severity}}">{{.Severity}}</span>
+          <span class="title">{{.Title}}</span>
+          {{if eq .Status "new"}}<span class="tag new">new</span>{{end}}
+          {{if gt .MonthlyCostUSD 0.0}}<span class="cost">{{usd .MonthlyCostUSD}}/mo</span>{{end}}
+        </div>
+        <div class="body">
+          {{with .Detail}}<div>{{.}}</div>{{end}}
+          <dl>
+            <dt>Resource</dt><dd>{{.Resource.Ref}}{{with .Resource.Name}} ({{.}}){{end}}</dd>
+            <dt>Detected by</dt><dd>{{.Source}} / {{.Rule}}</dd>
+            {{if eq .Status "open"}}<dt>Open for</dt><dd>{{ageDays $.Report .}} days</dd>{{end}}
+            {{range $k, $v := .Evidence}}<dt>{{$k}}</dt><dd>{{$v}}</dd>{{end}}
+          </dl>
+          {{with .Recommendation}}<div class="rec">{{.}}</div>{{end}}
+        </div>
+      </article>
+      {{end}}
+    {{else}}
+      <p class="empty">No findings in this section for this period.</p>
+    {{end}}
+  </section>
+  {{end}}
+
+  <footer>
+    {{with .Brand.Footer}}<div>{{.}}</div>{{end}}
+    <div>{{.Brand.Name}} — {{.Report.Period.Label}} infrastructure report for account {{.Report.Account.ID}}. Generated {{date .Report.GeneratedAt}}.</div>
+  </footer>
+
+</div>
+</body>
+</html>
