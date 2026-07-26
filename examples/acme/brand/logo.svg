@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" width="320" height="64" role="img" aria-label="Northwind Cloud Services">
+  <rect x="0" y="8" width="48" height="48" rx="10" fill="#0B5FFF"/>
+  <path d="M14 38a8 8 0 0 1 1.6-15.8A11 11 0 0 1 36 25.5 7 7 0 0 1 34.5 38z" fill="#fff"/>
+  <text x="62" y="30" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="700" fill="#0B2545">Northwind Cloud</text>
+  <text x="62" y="48" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#5A6B7B" letter-spacing="1.5">MANAGED SERVICES</text>
+</svg>

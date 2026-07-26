@@ -1,0 +1,13 @@
+{
+  "account": "123456789012",
+  "orphans": [
+    {"type": "ec2:volume", "id": "vol-0a1b2c3d4e5f60718", "region": "eu-west-1",
+     "monthly_cost_usd": 128.40, "age_days": 214, "reason": "gp3 volume unattached since instance termination"},
+    {"type": "ec2:address", "id": "eipalloc-0f1e2d3c", "region": "eu-west-1",
+     "monthly_cost_usd": 3.60, "age_days": 96, "reason": "elastic IP not associated with any instance"},
+    {"type": "elb:load-balancer", "id": "app/legacy-api/6a1f", "region": "eu-west-1",
+     "monthly_cost_usd": 26.15, "age_days": 61, "reason": "ALB with zero healthy targets and no requests in 60 days"},
+    {"type": "rds:snapshot", "id": "rds:orders-2024-11-02", "region": "eu-west-1",
+     "monthly_cost_usd": 11.05, "age_days": 601, "reason": "manual snapshot of a deleted instance"}
+  ]
+}

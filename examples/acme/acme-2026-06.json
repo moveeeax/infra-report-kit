@@ -1,0 +1,35 @@
+{
+  "tenant": {
+    "name": "Northwind Cloud Services",
+    "primary_color": "#0B2545",
+    "accent_color": "#0B5FFF",
+    "logo_path": "brand/logo.svg",
+    "contact": "service-desk@northwind.example",
+    "footer": "Prepared for Acme Retail Ltd under the Northwind Cloud Services managed agreement. Confidential."
+  },
+  "account": {
+    "provider": "aws",
+    "id": "123456789012",
+    "label": "Acme Retail — Production"
+  },
+  "period": {
+    "label": "2026-06",
+    "start": "2026-06-01",
+    "end": "2026-06-30"
+  },
+  "section_order": ["cost", "security", "reliability"],
+  "narrative_file": "narrative.md",
+  "previous_report": "history/2026-05/findings.json",
+  "sources": [
+    {"adapter": "cost-export",        "file": "in/cost-export.json"},
+    {"adapter": "aws-orphan-finder",  "file": "in/aws-orphan-finder.json"},
+    {"adapter": "aws-sg-audit",       "file": "in/aws-sg-audit.json"},
+    {"adapter": "s3-public-audit",    "file": "in/s3-public-audit.json"},
+    {"adapter": "aws-iam-least-priv", "file": "in/aws-iam-least-priv.json"},
+    {"adapter": "certcheck",          "file": "in/certcheck.json"},
+    {"adapter": "uptime-ping",        "file": "in/uptime-ping.json"},
+    {"adapter": "slo-calc",           "file": "in/slo-calc.json"},
+    {"adapter": "k8s-rightsize",      "file": "in/k8s-rightsize.json", "optional": true},
+    {"adapter": "k8s-crashloop",      "file": "in/k8s-crashloop.json", "optional": true}
+  ]
+}

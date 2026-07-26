@@ -1,0 +1,638 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-03T09:00:00Z",
+  "tenant": "Northwind Cloud Services",
+  "account": {
+    "provider": "aws",
+    "id": "123456789012",
+    "label": "Acme Retail \u2014 Production"
+  },
+  "period": {
+    "label": "2026-05",
+    "start": "2026-05-01T00:00:00Z",
+    "end": "2026-05-31T00:00:00Z"
+  },
+  "cost": {
+    "currency": "USD",
+    "current_usd": 7228.62,
+    "previous_usd": 6921.15,
+    "services": [
+      {
+        "service": "AWS Data Transfer",
+        "current_usd": 240.03,
+        "previous_usd": 233.9
+      },
+      {
+        "service": "Amazon CloudWatch",
+        "current_usd": 91.88,
+        "previous_usd": 90.05
+      },
+      {
+        "service": "Amazon EC2",
+        "current_usd": 4390.02,
+        "previous_usd": 4102.66
+      },
+      {
+        "service": "Amazon RDS",
+        "current_usd": 2105.5,
+        "previous_usd": 2098.1
+      },
+      {
+        "service": "Amazon S3",
+        "current_usd": 401.19,
+        "previous_usd": 396.44
+      }
+    ]
+  },
+  "slos": [
+    {
+      "endpoint": "https://api.example.com/health",
+      "objective_pct": 99.9,
+      "attainment_pct": 99.745,
+      "error_budget_remaining_pct": -155,
+      "downtime_minutes": 110,
+      "checks": 8640
+    },
+    {
+      "endpoint": "https://checkout.example.com/health",
+      "objective_pct": 99.5,
+      "attainment_pct": 94.676,
+      "error_budget_remaining_pct": -864.8,
+      "downtime_minutes": 2300,
+      "checks": 8640
+    },
+    {
+      "endpoint": "https://www.example.com/",
+      "objective_pct": 99.9,
+      "attainment_pct": 99.988,
+      "error_budget_remaining_pct": 88,
+      "downtime_minutes": 5,
+      "checks": 8640
+    }
+  ],
+  "findings": [
+    {
+      "id": "aws-iam-least-priv:dormant-admin:aws/iam:user/arn:aws:iam::123456789012:user/contractor-2023",
+      "source": "aws-iam-least-priv",
+      "section": "security",
+      "rule": "dormant-admin",
+      "severity": "critical",
+      "title": "Admin user contractor-2023 has not been used for 411 days",
+      "detail": "Holds AdministratorAccess; last activity 411 days ago.",
+      "recommendation": "Replace the broad policy with one generated from the last 90 days of Access Advisor data, and move break-glass admin behind a separate assumed role.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "type": "iam:user",
+        "id": "arn:aws:iam::123456789012:user/contractor-2023",
+        "name": "contractor-2023"
+      },
+      "evidence": {
+        "last_used_days": "411"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-sg-audit:world-open-ingress:aws/eu-west-1/ec2:security-group/sg-0aa11bb22cc33dd44",
+      "source": "aws-sg-audit",
+      "section": "security",
+      "rule": "world-open-ingress",
+      "severity": "critical",
+      "title": "Security group sg-0aa11bb22cc33dd44 (legacy-bastion) accepts traffic from the internet",
+      "detail": "TCP port 22 (SSH) from 0.0.0.0/0",
+      "recommendation": "Replace the 0.0.0.0/0 source with the office CIDR, a VPN range or a prefix list, or front the service with a load balancer.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "ec2:security-group",
+        "id": "sg-0aa11bb22cc33dd44",
+        "name": "legacy-bastion"
+      },
+      "evidence": {
+        "open_rules": "1",
+        "vpc_id": "vpc-0abc1234"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "certcheck:certificate-expiry:net/tls:certificate/api.example.com:443",
+      "source": "certcheck",
+      "section": "security",
+      "rule": "certificate-expiry",
+      "severity": "critical",
+      "title": "Certificate for api.example.com expires in 5 days",
+      "detail": "Issued by Let's Encrypt R3, not valid after 2026-07-03T09:00:00Z.",
+      "recommendation": "Move the certificate to an automatically renewed issuer (ACM or ACME) and alert at 30 days.",
+      "resource": {
+        "provider": "net",
+        "account": "123456789012",
+        "type": "tls:certificate",
+        "id": "api.example.com:443",
+        "name": "api.example.com"
+      },
+      "evidence": {
+        "days_remaining": "5",
+        "issuer": "Let's Encrypt R3",
+        "not_after": "2026-07-03T09:00:00Z"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "s3-public-audit:public-bucket:aws/eu-west-1/s3:bucket/acme-public-assets",
+      "source": "s3-public-audit",
+      "section": "security",
+      "rule": "public-bucket",
+      "severity": "critical",
+      "title": "Bucket acme-public-assets is readable from the internet",
+      "detail": "public ACL, Block Public Access disabled",
+      "recommendation": "Enable Block Public Access at the bucket and account level, then serve anything genuinely public through CloudFront with an origin access identity.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "s3:bucket",
+        "id": "acme-public-assets"
+      },
+      "evidence": {
+        "public_objects": "1284"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "uptime-ping:availability-below-target:net/http:endpoint/https://checkout.example.com/health",
+      "source": "uptime-ping",
+      "section": "reliability",
+      "rule": "availability-below-target",
+      "severity": "critical",
+      "title": "https://checkout.example.com/health was available 94.676% of the period (target 99.9%)",
+      "detail": "460 of 8640 checks failed, 2300 minutes of downtime.",
+      "recommendation": "Correlate the failed checks with deploys and instance replacements, then decide whether this needs redundancy or a slower rollout.",
+      "resource": {
+        "provider": "net",
+        "type": "http:endpoint",
+        "id": "https://checkout.example.com/health"
+      },
+      "evidence": {
+        "checks": "8640",
+        "downtime_minutes": "2300.0",
+        "failures": "460"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "k8s-rightsize:over-provisioned-workload:k8s/k8s:Deployment/acme-prod-eu-west-1/payments/Deployment/settlement",
+      "source": "k8s-rightsize",
+      "section": "cost",
+      "rule": "over-provisioned-workload",
+      "severity": "high",
+      "title": "payments/settlement requests 11.1x the CPU it uses, $186.40/month",
+      "detail": "CPU request 2000m against p95 180m; memory request 4096Mi against p95 512Mi.",
+      "recommendation": "Set requests near p95 with headroom and keep limits where they are, so the scheduler can pack the nodes without changing burst behaviour.",
+      "resource": {
+        "provider": "k8s",
+        "account": "acme-prod-eu-west-1",
+        "type": "k8s:Deployment",
+        "id": "acme-prod-eu-west-1/payments/Deployment/settlement",
+        "name": "settlement"
+      },
+      "monthly_cost_usd": 186.4,
+      "evidence": {
+        "cpu_p95_m": "180",
+        "cpu_request_m": "2000",
+        "memory_p95_mi": "512",
+        "memory_request_mi": "4096",
+        "namespace": "payments"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/ec2:volume/vol-0a1b2c3d4e5f60718",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "high",
+      "title": "Orphaned ec2:volume vol-0a1b2c3d4e5f60718 costs $128.40/month",
+      "detail": "gp3 volume unattached since instance termination",
+      "recommendation": "Delete vol-0a1b2c3d4e5f60718 after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "ec2:volume",
+        "id": "vol-0a1b2c3d4e5f60718"
+      },
+      "monthly_cost_usd": 128.4,
+      "evidence": {
+        "age_days": "214",
+        "reason": "gp3 volume unattached since instance termination"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-iam-least-priv:standing-admin:aws/iam:role/arn:aws:iam::123456789012:role/DeployRole",
+      "source": "aws-iam-least-priv",
+      "section": "security",
+      "rule": "standing-admin",
+      "severity": "high",
+      "title": "Role DeployRole holds standing administrator access",
+      "detail": "Holds AdministratorAccess.",
+      "recommendation": "Replace the broad policy with one generated from the last 90 days of Access Advisor data, and move break-glass admin behind a separate assumed role.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "type": "iam:role",
+        "id": "arn:aws:iam::123456789012:role/DeployRole",
+        "name": "DeployRole"
+      },
+      "evidence": {
+        "last_used_days": "2"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-sg-audit:world-open-ingress:aws/eu-west-1/ec2:security-group/sg-0ee55ff66aa77bb88",
+      "source": "aws-sg-audit",
+      "section": "security",
+      "rule": "world-open-ingress",
+      "severity": "high",
+      "title": "Security group sg-0ee55ff66aa77bb88 (web-tier) accepts traffic from the internet",
+      "detail": "TCP port 8080 from 0.0.0.0/0",
+      "recommendation": "Replace the 0.0.0.0/0 source with the office CIDR, a VPN range or a prefix list, or front the service with a load balancer.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "ec2:security-group",
+        "id": "sg-0ee55ff66aa77bb88",
+        "name": "web-tier"
+      },
+      "evidence": {
+        "open_rules": "1",
+        "vpc_id": "vpc-0abc1234"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "slo-calc:slo-missed:net/slo/https://api.example.com/health",
+      "source": "slo-calc",
+      "section": "reliability",
+      "rule": "slo-missed",
+      "severity": "high",
+      "title": "SLO missed for https://api.example.com/health: 99.745% against a 99.9% objective",
+      "detail": "Error budget remaining -155.0%, 110 minutes of downtime in the period.",
+      "recommendation": "Freeze risky changes to this service until the error budget is back above zero, or agree a lower objective with the client and stop reporting a miss.",
+      "resource": {
+        "provider": "net",
+        "type": "slo",
+        "id": "https://api.example.com/health"
+      },
+      "evidence": {
+        "attainment_pct": "99.745",
+        "objective_pct": "99.9"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "slo-calc:slo-missed:net/slo/https://checkout.example.com/health",
+      "source": "slo-calc",
+      "section": "reliability",
+      "rule": "slo-missed",
+      "severity": "high",
+      "title": "SLO missed for https://checkout.example.com/health: 94.676% against a 99.5% objective",
+      "detail": "Error budget remaining -864.8%, 2300 minutes of downtime in the period.",
+      "recommendation": "Freeze risky changes to this service until the error budget is back above zero, or agree a lower objective with the client and stop reporting a miss.",
+      "resource": {
+        "provider": "net",
+        "type": "slo",
+        "id": "https://checkout.example.com/health"
+      },
+      "evidence": {
+        "attainment_pct": "94.676",
+        "objective_pct": "99.5"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "k8s-rightsize:over-provisioned-workload:k8s/k8s:StatefulSet/acme-prod-eu-west-1/search/StatefulSet/indexer",
+      "source": "k8s-rightsize",
+      "section": "cost",
+      "rule": "over-provisioned-workload",
+      "severity": "medium",
+      "title": "search/indexer requests 2.9x the CPU it uses, $41.90/month",
+      "detail": "CPU request 1000m against p95 340m; memory request 8192Mi against p95 6100Mi.",
+      "recommendation": "Set requests near p95 with headroom and keep limits where they are, so the scheduler can pack the nodes without changing burst behaviour.",
+      "resource": {
+        "provider": "k8s",
+        "account": "acme-prod-eu-west-1",
+        "type": "k8s:StatefulSet",
+        "id": "acme-prod-eu-west-1/search/StatefulSet/indexer",
+        "name": "indexer"
+      },
+      "monthly_cost_usd": 41.9,
+      "evidence": {
+        "cpu_p95_m": "340",
+        "cpu_request_m": "1000",
+        "memory_p95_mi": "6100",
+        "memory_request_mi": "8192",
+        "namespace": "search"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/elb:load-balancer/app/legacy-api/6a1f",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "medium",
+      "title": "Orphaned elb:load-balancer app/legacy-api/6a1f costs $26.15/month",
+      "detail": "ALB with zero healthy targets and no requests in 60 days",
+      "recommendation": "Delete app/legacy-api/6a1f after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "elb:load-balancer",
+        "id": "app/legacy-api/6a1f"
+      },
+      "monthly_cost_usd": 26.15,
+      "evidence": {
+        "age_days": "61",
+        "reason": "ALB with zero healthy targets and no requests in 60 days"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "certcheck:certificate-expiry:aws/eu-west-1/acm:certificate/arn:aws:acm:eu-west-1:123456789012:certificate/EXAMPLEID",
+      "source": "certcheck",
+      "section": "security",
+      "rule": "certificate-expiry",
+      "severity": "medium",
+      "title": "Certificate for *.acme.example.com expires in 43 days",
+      "detail": "Issued by Amazon RSA 2048 M02, not valid after 2026-08-10T00:00:00Z.",
+      "recommendation": "Move the certificate to an automatically renewed issuer (ACM or ACME) and alert at 30 days.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "acm:certificate",
+        "id": "arn:aws:acm:eu-west-1:123456789012:certificate/EXAMPLEID",
+        "name": "*.acme.example.com"
+      },
+      "evidence": {
+        "days_remaining": "43",
+        "issuer": "Amazon RSA 2048 M02",
+        "not_after": "2026-08-10T00:00:00Z"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "k8s-crashloop:crashloop:k8s/k8s:workload/acme-prod-eu-west-1/search/StatefulSet/indexer",
+      "source": "k8s-crashloop",
+      "section": "reliability",
+      "rule": "crashloop",
+      "severity": "medium",
+      "title": "search/StatefulSet/indexer restarted 14 times in the period",
+      "detail": "Last state Error, exit code 1, observed over 720h.",
+      "recommendation": "Pull the previous container logs and the last termination state before the pod is rescheduled again.",
+      "resource": {
+        "provider": "k8s",
+        "account": "acme-prod-eu-west-1",
+        "type": "k8s:workload",
+        "id": "acme-prod-eu-west-1/search/StatefulSet/indexer",
+        "name": "StatefulSet/indexer"
+      },
+      "evidence": {
+        "last_exit_code": "1",
+        "namespace": "search",
+        "reason": "Error",
+        "restarts": "14"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "s3-public-audit:block-public-access-off:aws/eu-west-1/s3:bucket/acme-terraform-state",
+      "source": "s3-public-audit",
+      "section": "security",
+      "rule": "block-public-access-off",
+      "severity": "medium",
+      "title": "Bucket acme-terraform-state is not protected by Block Public Access",
+      "detail": "Block Public Access disabled",
+      "recommendation": "Enable Block Public Access at the bucket and account level, then serve anything genuinely public through CloudFront with an origin access identity.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "s3:bucket",
+        "id": "acme-terraform-state"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "uptime-ping:availability-below-target:net/http:endpoint/https://api.example.com/health",
+      "source": "uptime-ping",
+      "section": "reliability",
+      "rule": "availability-below-target",
+      "severity": "medium",
+      "title": "https://api.example.com/health was available 99.745% of the period (target 99.9%)",
+      "detail": "22 of 8640 checks failed, 110 minutes of downtime.",
+      "recommendation": "Correlate the failed checks with deploys and instance replacements, then decide whether this needs redundancy or a slower rollout.",
+      "resource": {
+        "provider": "net",
+        "type": "http:endpoint",
+        "id": "https://api.example.com/health"
+      },
+      "evidence": {
+        "checks": "8640",
+        "downtime_minutes": "110.0",
+        "failures": "22"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/rds:snapshot/rds:orders-2024-11-02",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "low",
+      "title": "Orphaned rds:snapshot rds:orders-2024-11-02 costs $11.05/month",
+      "detail": "manual snapshot of a deleted instance",
+      "recommendation": "Delete rds:orders-2024-11-02 after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "rds:snapshot",
+        "id": "rds:orders-2024-11-02"
+      },
+      "monthly_cost_usd": 11.05,
+      "evidence": {
+        "age_days": "601",
+        "reason": "manual snapshot of a deleted instance"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "k8s-rightsize:over-provisioned-workload:k8s/k8s:Deployment/acme-prod-eu-west-1/web/Deployment/frontend",
+      "source": "k8s-rightsize",
+      "section": "cost",
+      "rule": "over-provisioned-workload",
+      "severity": "low",
+      "title": "web/frontend requests 1.7x the CPU it uses, $8.75/month",
+      "detail": "CPU request 500m against p95 300m; memory request 512Mi against p95 380Mi.",
+      "recommendation": "Set requests near p95 with headroom and keep limits where they are, so the scheduler can pack the nodes without changing burst behaviour.",
+      "resource": {
+        "provider": "k8s",
+        "account": "acme-prod-eu-west-1",
+        "type": "k8s:Deployment",
+        "id": "acme-prod-eu-west-1/web/Deployment/frontend",
+        "name": "frontend"
+      },
+      "monthly_cost_usd": 8.75,
+      "evidence": {
+        "cpu_p95_m": "300",
+        "cpu_request_m": "500",
+        "memory_p95_mi": "380",
+        "memory_request_mi": "512",
+        "namespace": "web"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/ec2:address/eipalloc-0f1e2d3c",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "low",
+      "title": "Orphaned ec2:address eipalloc-0f1e2d3c costs $3.60/month",
+      "detail": "elastic IP not associated with any instance",
+      "recommendation": "Delete eipalloc-0f1e2d3c after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "ec2:address",
+        "id": "eipalloc-0f1e2d3c"
+      },
+      "monthly_cost_usd": 3.6,
+      "evidence": {
+        "age_days": "96",
+        "reason": "elastic IP not associated with any instance"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-iam-least-priv:unused-permissions:aws/iam:role/arn:aws:iam::123456789012:role/AppRuntime",
+      "source": "aws-iam-least-priv",
+      "section": "security",
+      "rule": "unused-permissions",
+      "severity": "low",
+      "title": "Role AppRuntime can reach 4 services it never uses",
+      "detail": "Never used: rds, kms, sagemaker, redshift",
+      "recommendation": "Replace the broad policy with one generated from the last 90 days of Access Advisor data, and move break-glass admin behind a separate assumed role.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "type": "iam:role",
+        "id": "arn:aws:iam::123456789012:role/AppRuntime",
+        "name": "AppRuntime"
+      },
+      "evidence": {
+        "last_used_days": "1",
+        "unused_services": "rds,kms,sagemaker,redshift"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "k8s-crashloop:crashloop:k8s/k8s:workload/acme-prod-eu-west-1/web/Deployment/frontend",
+      "source": "k8s-crashloop",
+      "section": "reliability",
+      "rule": "crashloop",
+      "severity": "low",
+      "title": "web/Deployment/frontend restarted 3 times in the period",
+      "detail": "Last state Error, exit code 2, observed over 720h.",
+      "recommendation": "Pull the previous container logs and the last termination state before the pod is rescheduled again.",
+      "resource": {
+        "provider": "k8s",
+        "account": "acme-prod-eu-west-1",
+        "type": "k8s:workload",
+        "id": "acme-prod-eu-west-1/web/Deployment/frontend",
+        "name": "Deployment/frontend"
+      },
+      "evidence": {
+        "last_exit_code": "2",
+        "namespace": "web",
+        "reason": "Error",
+        "restarts": "3"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/ec2:nat-gateway/nat-0a9b8c7d6e5f40312",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "high",
+      "title": "Orphaned ec2:nat-gateway nat-0a9b8c7d6e5f40312 costs $47.30/month",
+      "detail": "NAT gateway in a subnet with no running instances",
+      "recommendation": "Delete nat-0a9b8c7d6e5f40312 after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "ec2:nat-gateway",
+        "id": "nat-0a9b8c7d6e5f40312"
+      },
+      "monthly_cost_usd": 47.3,
+      "evidence": {
+        "age_days": "133",
+        "reason": "NAT gateway in a subnet with no running instances"
+      },
+      "first_seen": "2026-02-05T09:00:00Z",
+      "status": "open"
+    },
+    {
+      "id": "s3-public-audit:public-bucket:aws/eu-west-1/s3:bucket/acme-invoices-export",
+      "source": "s3-public-audit",
+      "section": "security",
+      "rule": "public-bucket",
+      "severity": "critical",
+      "title": "Bucket acme-invoices-export is readable from the internet",
+      "detail": "public bucket policy, Block Public Access disabled",
+      "recommendation": "Enable Block Public Access at the bucket and account level, then serve anything genuinely public through CloudFront with an origin access identity.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "s3:bucket",
+        "id": "acme-invoices-export"
+      },
+      "first_seen": "2026-04-02T09:00:00Z",
+      "status": "open"
+    }
+  ],
+  "narrative": "",
+  "delta": null
+}

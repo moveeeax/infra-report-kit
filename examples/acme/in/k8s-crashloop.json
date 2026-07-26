@@ -1,0 +1,12 @@
+{
+  "cluster": "acme-prod-eu-west-1",
+  "window_hours": 720,
+  "pods": [
+    {"namespace": "payments", "pod": "settlement-7d9f4b5c6-x2kq9", "controller": "Deployment/settlement",
+     "restarts": 214, "reason": "CrashLoopBackOff", "last_exit_code": 137},
+    {"namespace": "search", "pod": "indexer-5c8b9d7f4-mn3pq", "controller": "StatefulSet/indexer",
+     "restarts": 14, "reason": "Error", "last_exit_code": 1},
+    {"namespace": "web", "pod": "frontend-6f7a8b9c0-tt4rs", "controller": "Deployment/frontend",
+     "restarts": 3, "reason": "Error", "last_exit_code": 2}
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "endpoints": [
+    {"url": "https://api.example.com/health", "checks": 8640, "failures": 22, "uptime_pct": 99.745, "downtime_minutes": 110.0},
+    {"url": "https://checkout.example.com/health", "checks": 8640, "failures": 460, "uptime_pct": 94.676, "downtime_minutes": 2300.0},
+    {"url": "https://www.example.com/", "checks": 8640, "failures": 1, "uptime_pct": 99.988, "downtime_minutes": 5.0}
+  ]
+}

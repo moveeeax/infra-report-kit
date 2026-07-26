@@ -1,0 +1,11 @@
+{
+  "account": "123456789012",
+  "buckets": [
+    {"name": "acme-public-assets", "region": "eu-west-1", "public_acl": true, "public_policy": false,
+     "block_public_access": false, "public_objects": 1284},
+    {"name": "acme-terraform-state", "region": "eu-west-1", "public_acl": false, "public_policy": false,
+     "block_public_access": false, "public_objects": 0},
+    {"name": "acme-backups", "region": "eu-west-1", "public_acl": false, "public_policy": false,
+     "block_public_access": true, "public_objects": 0}
+  ]
+}

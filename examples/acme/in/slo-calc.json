@@ -1,0 +1,10 @@
+{
+  "slos": [
+    {"endpoint": "https://api.example.com/health", "objective_pct": 99.9, "attainment_pct": 99.745,
+     "error_budget_remaining_pct": -155.0, "downtime_minutes": 110.0, "checks": 8640},
+    {"endpoint": "https://checkout.example.com/health", "objective_pct": 99.5, "attainment_pct": 94.676,
+     "error_budget_remaining_pct": -864.8, "downtime_minutes": 2300.0, "checks": 8640},
+    {"endpoint": "https://www.example.com/", "objective_pct": 99.9, "attainment_pct": 99.988,
+     "error_budget_remaining_pct": 88.0, "downtime_minutes": 5.0, "checks": 8640}
+  ]
+}

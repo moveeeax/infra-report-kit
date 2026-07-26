@@ -1,0 +1,16 @@
+{
+  "account": "123456789012",
+  "security_groups": [
+    {"group_id": "sg-0aa11bb22cc33dd44", "group_name": "legacy-bastion", "region": "eu-west-1", "vpc_id": "vpc-0abc1234",
+     "open_ingress": [{"protocol": "tcp", "from_port": 22, "to_port": 22, "cidr": "0.0.0.0/0"}]},
+    {"group_id": "sg-0ee55ff66aa77bb88", "group_name": "web-tier", "region": "eu-west-1", "vpc_id": "vpc-0abc1234",
+     "open_ingress": [{"protocol": "tcp", "from_port": 8080, "to_port": 8080, "cidr": "0.0.0.0/0"}]},
+    {"group_id": "sg-0cc99dd00ee11ff22", "group_name": "db-temp", "region": "eu-central-1", "vpc_id": "vpc-0def5678",
+     "open_ingress": [
+       {"protocol": "tcp", "from_port": 0, "to_port": 65535, "cidr": "0.0.0.0/0"},
+       {"protocol": "tcp", "from_port": 5432, "to_port": 5432, "cidr": "0.0.0.0/0"}
+     ]},
+    {"group_id": "sg-0quiet00000000000", "group_name": "internal-only", "region": "eu-west-1", "vpc_id": "vpc-0abc1234",
+     "open_ingress": []}
+  ]
+}
