@@ -1,0 +1,14 @@
+{
+  "account": "123456789012",
+  "principals": [
+    {"arn": "arn:aws:iam::123456789012:user/contractor-2023", "name": "contractor-2023", "type": "user",
+     "admin": true, "last_used_days": 411, "attached_policies": ["AdministratorAccess"], "unused_services": []},
+    {"arn": "arn:aws:iam::123456789012:role/DeployRole", "name": "DeployRole", "type": "role",
+     "admin": true, "last_used_days": 2, "attached_policies": ["AdministratorAccess"], "unused_services": []},
+    {"arn": "arn:aws:iam::123456789012:role/AppRuntime", "name": "AppRuntime", "type": "role",
+     "admin": false, "last_used_days": 1, "attached_policies": ["PowerUserAccess"],
+     "unused_services": ["rds", "kms", "sagemaker", "redshift"]},
+    {"arn": "arn:aws:iam::123456789012:role/ReadOnlyAudit", "name": "ReadOnlyAudit", "type": "role",
+     "admin": false, "last_used_days": 3, "attached_policies": ["ReadOnlyAccess"], "unused_services": []}
+  ]
+}

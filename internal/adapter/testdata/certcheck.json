@@ -1,0 +1,14 @@
+{
+  "certificates": [
+    {"subject": "api.example.com", "issuer": "Let's Encrypt R3", "not_after": "2026-07-03T09:00:00Z",
+     "days_remaining": 5, "origin": "tls", "identifier": "api.example.com:443"},
+    {"subject": "legacy.example.com", "issuer": "DigiCert TLS RSA SHA256 2020 CA1", "not_after": "2026-06-20T00:00:00Z",
+     "days_remaining": -8, "origin": "tls", "identifier": "legacy.example.com:443"},
+    {"subject": "*.acme.example.com", "issuer": "Amazon RSA 2048 M02", "not_after": "2026-08-10T00:00:00Z",
+     "days_remaining": 43, "origin": "acm", "region": "eu-west-1",
+     "identifier": "arn:aws:acm:eu-west-1:123456789012:certificate/EXAMPLEID"},
+    {"subject": "www.example.com", "issuer": "Amazon RSA 2048 M02", "not_after": "2027-01-01T00:00:00Z",
+     "days_remaining": 189, "origin": "acm", "region": "eu-west-1",
+     "identifier": "arn:aws:acm:eu-west-1:123456789012:certificate/OTHERID"}
+  ]
+}

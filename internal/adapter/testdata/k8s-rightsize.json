@@ -1,0 +1,14 @@
+{
+  "cluster": "acme-prod-eu-west-1",
+  "recommendations": [
+    {"namespace": "payments", "workload": "settlement", "kind": "Deployment",
+     "cpu_request_m": 2000, "cpu_p95_m": 180, "memory_request_mi": 4096, "memory_p95_mi": 512,
+     "monthly_saving_usd": 186.40},
+    {"namespace": "search", "workload": "indexer", "kind": "StatefulSet",
+     "cpu_request_m": 1000, "cpu_p95_m": 340, "memory_request_mi": 8192, "memory_p95_mi": 6100,
+     "monthly_saving_usd": 41.90},
+    {"namespace": "web", "workload": "frontend", "kind": "Deployment",
+     "cpu_request_m": 500, "cpu_p95_m": 300, "memory_request_mi": 512, "memory_p95_mi": 380,
+     "monthly_saving_usd": 8.75}
+  ]
+}
