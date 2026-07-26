@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          check-latest: true
+
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files need gofmt:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1
+
+      - name: Build
+        run: go build -trimpath -ldflags "-s -w -X main.version=${GITHUB_SHA::7}" -o bin/infra-report ./cmd/infra-report
+
+      - name: Render the shipped example
+        run: |
+          ./bin/infra-report gen -config examples/acme/acme-2026-06.json -out out
+          test -s out/report.html
+          test -s out/findings.json
+
+      - name: Upload the rendered example
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: example-report
+          path: out/
+          retention-days: 7

@@ -1,0 +1,22 @@
+# Build output
+/bin/
+/dist/
+/infra-report
+
+# Generated reports. These contain a client's account IDs, resource names and
+# spend. They are never committed.
+/out/
+*.pdf
+**/findings.json
+!examples/**/findings.json
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
