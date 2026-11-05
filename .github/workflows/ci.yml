@@ -15,13 +15,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
+        go: ['1.26', '1.27']
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
-          go-version: '1.24'
+          go-version: ${{ matrix.go }}
           check-latest: true
           # No third-party dependencies, so there is no go.sum to key a cache on.
           cache: false
@@ -54,8 +55,8 @@ jobs:
           test -s out/findings.json
 
       - name: Upload the rendered example
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        if: matrix.os == 'ubuntu-latest' && matrix.go == '1.27'
+        uses: actions/upload-artifact@v7
         with:
           name: example-report
           path: out/
