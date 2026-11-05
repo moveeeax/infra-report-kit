@@ -41,7 +41,7 @@ cd infra-report-kit
 make build      # -> bin/infra-report
 ```
 
-Requires Go 1.24 or newer.
+Requires Go 1.26 or newer.
 
 ## Usage example
 
@@ -220,6 +220,6 @@ that requires this binary to hold a cloud credential.
 Findings JSON carries a `schema_version`. A file written by a newer build is
 rejected rather than silently misread.
 
-## Licence
+## License
 
-Not yet decided. Until a `LICENSE` file appears here, no licence is granted.
+MIT. See [`LICENSE`](LICENSE).
