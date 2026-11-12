@@ -203,3 +203,83 @@ func TestVersionAndAdapters(t *testing.T) {
 		}
 	}
 }
+
+func TestGenAppliesTheAcceptedRiskRegister(t *testing.T) {
+	_, rep := genExample(t)
+
+	const bucket = "s3-public-audit:public-bucket:aws/eu-west-1/s3:bucket/acme-public-assets"
+	const snapshot = "aws-orphan-finder:orphaned-resource:aws/eu-west-1/rds:snapshot/rds:orders-2024-11-02"
+
+	if len(rep.Accepted) != 1 || rep.Accepted[0].ID != bucket {
+		t.Fatalf("accepted = %+v, want only the public assets bucket", rep.Accepted)
+	}
+	for _, f := range rep.Findings {
+		if f.ID == bucket {
+			t.Error("the accepted bucket is still among the open findings")
+		}
+	}
+	var lapsed *model.Finding
+	for i := range rep.Findings {
+		if rep.Findings[i].ID == snapshot {
+			lapsed = &rep.Findings[i]
+		}
+	}
+	if lapsed == nil || !lapsed.NeedsReReview() {
+		t.Fatalf("snapshot = %+v, want it back among the findings with an expired acceptance", lapsed)
+	}
+	if lapsed.Status != model.StatusOpen {
+		t.Errorf("snapshot status = %q, want open: it was in last month's report", lapsed.Status)
+	}
+
+	d := rep.Delta
+	if d.Accepted != 1 || len(d.NewlyAccepted) != 1 || len(d.Reopened) != 1 {
+		t.Fatalf("delta = %+v, want 1 accepted (newly) and 1 reopened", d)
+	}
+	for _, f := range d.ResolvedList {
+		if f.ID == bucket || f.ID == snapshot {
+			t.Errorf("%s reads as resolved; moving in or out of the register is not a fix", f.ID)
+		}
+	}
+}
+
+// tenantWithRegister writes a minimal tenant whose register has the given
+// contents and returns the config path.
+func tenantWithRegister(t *testing.T, register string) string {
+	t.Helper()
+	dir := t.TempDir()
+	certs, err := os.ReadFile("../../examples/acme/in/certcheck.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg := `{"tenant":{"name":"N"},"account":{"id":"1"},
+	  "period":{"label":"2026-06","start":"2026-06-01","end":"2026-06-30"},
+	  "accepted":"accepted.json",
+	  "sources":[{"adapter":"certcheck","file":"certs.json"}]}`
+	for name, body := range map[string]string{
+		"tenant.json": cfg, "accepted.json": register, "certs.json": string(certs),
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return filepath.Join(dir, "tenant.json")
+}
+
+func TestValidateRejectsAnInvalidRegister(t *testing.T) {
+	path := tenantWithRegister(t, `[{"fingerprint":"x","reason":"r","accepted_by":"a"}]`)
+	err := run([]string{"validate", "-config", path})
+	if err == nil {
+		t.Fatal("want an error: the register entry has no expiry")
+	}
+	if !strings.Contains(err.Error(), "accepted") || !strings.Contains(err.Error(), "expires") {
+		t.Errorf("error = %v, want it to name the register and the field", err)
+	}
+}
+
+func TestGenRejectsAnInvalidRegister(t *testing.T) {
+	path := tenantWithRegister(t, `not json`)
+	err := run([]string{"gen", "-config", path, "-out", t.TempDir(), "-quiet"})
+	if err == nil || !strings.Contains(err.Error(), "accepted risks") {
+		t.Fatalf("err = %v, want gen to stop on a broken register", err)
+	}
+}

@@ -20,6 +20,7 @@
   "section_order": ["cost", "security", "reliability"],
   "narrative_file": "narrative.md",
   "previous_report": "history/2026-05/findings.json",
+  "accepted": "accepted.json",
   "sources": [
     {"adapter": "cost-export",        "file": "in/cost-export.json"},
     {"adapter": "aws-orphan-finder",  "file": "in/aws-orphan-finder.json"},

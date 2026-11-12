@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/moveeeax/infra-report-kit/internal/accept"
 	"github.com/moveeeax/infra-report-kit/internal/adapter"
 	"github.com/moveeeax/infra-report-kit/internal/collect"
 	"github.com/moveeeax/infra-report-kit/internal/config"
@@ -118,6 +119,16 @@ func cmdGen(ctx context.Context, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Acceptances are applied before the delta so it can tell a finding that
+	// moved into the accepted-risks appendix from one that was resolved.
+	if cfg.Accepted != "" {
+		reg, err := accept.Load(cfg.Resolve(cfg.Accepted))
+		if err != nil {
+			return fmt.Errorf("accepted risks: %w", err)
+		}
+		warnings = append(warnings, accept.Apply(rep, reg)...)
+	}
 	for _, w := range warnings {
 		fmt.Fprintln(os.Stderr, "warning: "+w)
 	}
@@ -188,6 +199,9 @@ func printSummary(w *os.File, rep *model.Report, findingsPath, htmlPath, pdfPath
 		len(rep.Findings),
 		counts[model.SeverityCritical], counts[model.SeverityHigh],
 		counts[model.SeverityMedium], counts[model.SeverityLow], counts[model.SeverityInfo])
+	if n, reReview := len(rep.Accepted), rep.ReReviewCount(); n > 0 || reReview > 0 {
+		fmt.Fprintf(w, "  accepted: %d excluded from the totals, %d expired and due for re-review\n", n, reReview)
+	}
 	fmt.Fprintf(w, "  spend:    $%.2f (%+.2f vs previous month)\n", rep.Cost.CurrentUSD, rep.Cost.DeltaUSD())
 	fmt.Fprintf(w, "  waste:    $%.2f/month attached to open findings\n", rep.IdentifiedWasteUSD())
 	if d := rep.Delta; d != nil {
@@ -231,8 +245,13 @@ func cmdValidate(args []string) error {
 			missing = append(missing, fmt.Sprintf("narrative_file: %v", err))
 		}
 	}
+	if cfg.Accepted != "" {
+		if _, err := accept.Load(cfg.Resolve(cfg.Accepted)); err != nil {
+			missing = append(missing, fmt.Sprintf("accepted: %v", err))
+		}
+	}
 	if len(missing) > 0 {
-		return fmt.Errorf("config is valid but inputs are missing:\n  - %s", strings.Join(missing, "\n  - "))
+		return fmt.Errorf("config is valid but inputs are missing or invalid:\n  - %s", strings.Join(missing, "\n  - "))
 	}
 
 	fmt.Printf("ok: %s — %s, %d sources, sections %v\n",
@@ -277,6 +296,26 @@ func cmdDiff(args []string) error {
 	}
 	for _, f := range d.ResolvedList {
 		fmt.Printf("  - [%s] %s\n", f.Severity, f.Title)
+	}
+	if d.Accepted > 0 || len(d.Reopened) > 0 {
+		fmt.Printf("  accepted: %d (%d newly accepted, %d back to open)\n",
+			d.Accepted, len(d.NewlyAccepted), len(d.Reopened))
+	}
+	for _, f := range d.NewlyAccepted {
+		// A hand-edited findings file can carry an accepted entry with no
+		// acceptance block; print what is there rather than panic.
+		if f.Acceptance != nil {
+			fmt.Printf("  = [%s] %s (accepted until %s)\n", f.Severity, f.Title, f.Acceptance.Expires.Format("2006-01-02"))
+		} else {
+			fmt.Printf("  = [%s] %s (accepted)\n", f.Severity, f.Title)
+		}
+	}
+	for _, f := range d.Reopened {
+		if f.Acceptance != nil {
+			fmt.Printf("  ! [%s] %s (acceptance expired %s)\n", f.Severity, f.Title, f.Acceptance.Expires.Format("2006-01-02"))
+		} else {
+			fmt.Printf("  ! [%s] %s (acceptance withdrawn)\n", f.Severity, f.Title)
+		}
 	}
 	return nil
 }

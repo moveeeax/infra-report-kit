@@ -170,3 +170,7 @@ Findings are matched across months by a fingerprint:
 Nothing that legitimately changes — a dollar amount, a timestamp, a restart
 count — belongs in it. Change the fingerprint and every finding in next
 month's report reads as new.
+
+The same fingerprint is the key of the tenant's accepted-risk register, so a
+fingerprint change also orphans every acceptance for that adapter. The
+`gen` run warns about register entries that match no finding.

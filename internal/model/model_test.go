@@ -165,3 +165,49 @@ func TestSectionValid(t *testing.T) {
 		t.Error("compliance is explicitly out of scope and must not validate")
 	}
 }
+
+func TestAcceptanceExpiry(t *testing.T) {
+	a := Acceptance{Expires: time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC)}
+	if a.ExpiredAt(time.Date(2026, 6, 15, 18, 0, 0, 0, time.UTC)) {
+		t.Error("an acceptance must hold for the whole of its expiry day")
+	}
+	if !a.ExpiredAt(time.Date(2026, 6, 16, 0, 0, 0, 0, time.UTC)) {
+		t.Error("an acceptance must lapse the day after it expires")
+	}
+
+	f := Finding{}
+	if f.Accepted() || f.NeedsReReview() {
+		t.Error("a finding with no acceptance is neither accepted nor due for re-review")
+	}
+	f.Acceptance = &Acceptance{}
+	if !f.Accepted() || f.NeedsReReview() {
+		t.Error("an active acceptance must read as accepted")
+	}
+	f.Acceptance.Expired = true
+	if f.Accepted() || !f.NeedsReReview() {
+		t.Error("an expired acceptance must read as due for re-review")
+	}
+}
+
+func TestSortAlsoOrdersAcceptedFindings(t *testing.T) {
+	r := New("t", Account{}, Period{}, time.Now())
+	r.Accepted = []Finding{
+		{ID: "low", Severity: SeverityLow},
+		{ID: "crit", Severity: SeverityCritical},
+	}
+	r.Sort()
+	if r.Accepted[0].ID != "crit" {
+		t.Errorf("accepted order = %v, want critical first", r.Accepted)
+	}
+}
+
+func TestReReviewCount(t *testing.T) {
+	r := New("t", Account{}, Period{}, time.Now())
+	r.Findings = []Finding{
+		{ID: "a", Acceptance: &Acceptance{Expired: true}},
+		{ID: "b"},
+	}
+	if got := r.ReReviewCount(); got != 1 {
+		t.Errorf("ReReviewCount = %d, want 1", got)
+	}
+}

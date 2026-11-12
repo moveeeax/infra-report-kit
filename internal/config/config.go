@@ -67,7 +67,10 @@ type Config struct {
 	NarrativeFile  string        `json:"narrative_file,omitempty"`
 	Sources        []Source      `json:"sources"`
 	PreviousReport string        `json:"previous_report,omitempty"`
-	PDF            PDF           `json:"pdf,omitempty"`
+	// Accepted points at the accepted-risk register: a JSON array of
+	// {fingerprint, reason, accepted_by, expires}. See package accept.
+	Accepted string `json:"accepted,omitempty"`
+	PDF      PDF    `json:"pdf,omitempty"`
 
 	// dir is the directory the config was loaded from; all relative paths in
 	// the config resolve against it, not against the caller's cwd.
