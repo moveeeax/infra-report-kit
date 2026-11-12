@@ -23,6 +23,10 @@ is tested, without a single secret.
 - **Diffs** against last month's `findings.json`: what is new, what is still
   open and how long for, what was resolved and how much recurring spend that
   removed. This is the part an MSP can charge for every month.
+- **Sets aside accepted risks.** A finding the client has decided to live with,
+  until a date, moves to an appendix and out of the totals instead of reading
+  "still open, 9 months" in every report. When the acceptance expires it comes
+  back, flagged for re-review.
 - **Renders** a single self-contained HTML file with the MSP's logo, colours,
   contact block and footer, sized for A4 and ready for print-to-PDF. No
   external fonts, no CDN, no network at render time.
@@ -57,10 +61,11 @@ make build
 
 ```
 Northwind Cloud Services — 2026-06 — account 123456789012
-  findings: 25 (critical 7, high 7, medium 6, low 5, info 0)
+  findings: 24 (critical 6, high 7, medium 6, low 5, info 0)
+  accepted: 1 excluded from the totals, 1 expired and due for re-review
   spend:    $7927.43 (+698.81 vs previous month)
   waste:    $406.25/month attached to open findings
-  delta:    3 new, 22 open, 2 resolved ($47.30/month recovered)
+  delta:    3 new, 21 open, 2 resolved ($47.30/month recovered)
   wrote:    out/findings.json
             out/report.html
 ```
@@ -79,14 +84,21 @@ Ask what moved without rendering anything:
 ```
 2026-05 -> 2026-06
   new:      3
-  open:     22
+  open:     21
   resolved: 2 ($47.30/month recovered)
   + [critical] Security group sg-0cc99dd00ee11ff22 (db-temp) accepts traffic from the internet
   + [critical] Certificate for legacy.example.com has expired
   + [high] payments/Deployment/settlement restarted 214 times in the period
   - [high] Orphaned ec2:nat-gateway nat-0a9b8c7d6e5f40312 costs $47.30/month
   - [critical] Bucket acme-invoices-export is readable from the internet
+  accepted: 1 (1 newly accepted, 1 back to open)
+  = [critical] Bucket acme-public-assets is readable from the internet (accepted until 2026-12-31)
+  ! [low] Orphaned rds:snapshot rds:orders-2024-11-02 costs $11.05/month (acceptance expired 2026-06-15)
 ```
+
+`+` is new, `-` resolved, `=` accepted this period, `!` accepted last period
+and back among the open findings because the acceptance expired or was
+removed from the register.
 
 Check a config before the scanners run:
 
@@ -128,6 +140,7 @@ to the config file, so a tenant directory is self-contained and movable.
   "section_order": ["cost", "security", "reliability"],
   "narrative_file": "narrative.md",
   "previous_report": "history/2026-05/findings.json",
+  "accepted": "accepted.json",
   "sources": [
     {"adapter": "cost-export",   "file": "in/cost-export.json"},
     {"adapter": "aws-sg-audit",  "command": ["aws-sg-audit", "--json"]},
@@ -143,8 +156,43 @@ to the config file, so a tenant directory is self-contained and movable.
   worse than shipping nothing.
 - `validate` reports every problem in the config at once, not the first one.
 
+- `accepted` is optional; see [Accepted risks](#accepted-risks).
+
 The logo is inlined as a data URI, so the rendered HTML is one file that prints
 identically with no network access.
+
+## Accepted risks
+
+Some findings are deliberate: a bucket that serves public images, a snapshot
+kept for an audit. Point `accepted` at a register of them:
+
+```json
+[
+  {
+    "fingerprint": "s3-public-audit:public-bucket:aws/eu-west-1/s3:bucket/acme-public-assets",
+    "reason": "Serves the storefront's product images. Public read is intended.",
+    "accepted_by": "J. Okafor, Head of Engineering, Acme Retail",
+    "expires": "2026-12-31"
+  }
+]
+```
+
+- `fingerprint` is the finding's `id` from `findings.json`
+  (see [Finding identity](docs/adapters.md#finding-identity)).
+- All four fields are required. There is no open-ended acceptance: every entry
+  has an `expires` date, `YYYY-MM-DD`, and holds through the end of that day
+  (UTC), judged against the report timestamp (`-now` when given).
+- A finding with an active acceptance moves to the "Accepted risks" appendix
+  and to `accepted` in `findings.json`. It no longer counts in the severity
+  totals, the identified waste, the open-findings figure or the section pages.
+- Once the acceptance has expired, the finding is back in its section with a
+  "re-review" badge and the original reason and owner next to it.
+- Moving into or out of the register is not a fix: the delta never reports an
+  accepted finding as resolved, and a finding that comes back keeps its
+  original first-seen date.
+- An entry that matches no finding this period is reported as a warning, so
+  fixed or mistyped entries get cleaned out.
+- `validate` parses the register and reports every bad entry at once.
 
 ## The narrative
 
@@ -218,7 +266,8 @@ multi-tenant scheduling and email delivery, compliance attestations, anything
 that requires this binary to hold a cloud credential.
 
 Findings JSON carries a `schema_version`. A file written by a newer build is
-rejected rather than silently misread.
+rejected rather than silently misread. Version 2 added the `accepted` list;
+version 1 files still load as previous reports.
 
 ## License
 

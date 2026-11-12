@@ -303,3 +303,85 @@ func TestPDFWithoutCommand(t *testing.T) {
 		t.Fatal("want an error when no pdf command is configured")
 	}
 }
+
+func renderReport(t *testing.T, rep *model.Report) string {
+	t.Helper()
+	var buf bytes.Buffer
+	if err := HTML(&buf, BuildView(rep, defaultBrand(), model.Sections, "")); err != nil {
+		t.Fatalf("HTML: %v", err)
+	}
+	return buf.String()
+}
+
+func TestAcceptedRisksGoToTheAppendix(t *testing.T) {
+	rep := sampleReport()
+	rep.Accepted = []model.Finding{{
+		ID: "s3", Source: "s3-public-audit", Section: model.SectionSecurity, Rule: "public-bucket",
+		Severity: model.SeverityCritical, Title: "Bucket acme-public-assets is readable from the internet",
+		Resource: model.Resource{Provider: "aws", Type: "s3:bucket", ID: "acme-public-assets"},
+		Status:   model.StatusOpen,
+		Acceptance: &model.Acceptance{
+			Reason: "Serves product images <public by design>", AcceptedBy: "J. Okafor",
+			Expires: time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC),
+		},
+	}}
+	rep.Delta.Accepted = 1
+	rep.Delta.NewlyAccepted = rep.Accepted
+	got := renderReport(t, rep)
+
+	if !strings.Contains(got, "Appendix: accepted risks") {
+		t.Fatal("no accepted-risks appendix")
+	}
+	if strings.Count(got, "Bucket acme-public-assets") != 2 {
+		t.Errorf("the accepted finding should appear in the appendix and the acceptance changes table only")
+	}
+	if strings.Contains(got, `<span class="title">Bucket acme-public-assets`) {
+		t.Error("the accepted finding is rendered as an open finding card")
+	}
+	for _, want := range []string{
+		"Serves product images &lt;public by design&gt;",
+		"J. Okafor",
+		"31 December 2026",
+		"Accepted risks excluded from these totals: 1",
+		"Accepted until 31 December 2026",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered report is missing %q", want)
+		}
+	}
+}
+
+func TestNoAppendixWithoutAcceptedRisks(t *testing.T) {
+	got := renderReport(t, sampleReport())
+	for _, unwanted := range []string{"Appendix: accepted risks", "Accepted risks excluded", "re-review"} {
+		if strings.Contains(got, unwanted) {
+			t.Errorf("report without a register mentions %q", unwanted)
+		}
+	}
+}
+
+func TestExpiredAcceptanceGetsAReReviewBadge(t *testing.T) {
+	rep := sampleReport()
+	for i := range rep.Findings {
+		if rep.Findings[i].Source == "aws-sg-audit" {
+			rep.Findings[i].Acceptance = &model.Acceptance{
+				Reason: "bastion kept for vendor access", AcceptedBy: "M. Lindqvist",
+				Expires: time.Date(2026, 6, 15, 0, 0, 0, 0, time.UTC), Expired: true,
+			}
+			rep.Delta.Reopened = []model.Finding{rep.Findings[i]}
+		}
+	}
+	got := renderReport(t, rep)
+	for _, want := range []string{
+		`<span class="tag rereview">re-review</span>`,
+		"Expired 15 June 2026. Accepted by M. Lindqvist: bastion kept for vendor access",
+		"Acceptance expired 15 June 2026",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("rendered report is missing %q", want)
+		}
+	}
+	if strings.Contains(got, "Appendix: accepted risks") {
+		t.Error("an expired acceptance must not keep the finding in the appendix")
+	}
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "fingerprint": "s3-public-audit:public-bucket:aws/eu-west-1/s3:bucket/acme-public-assets",
+    "reason": "Serves the storefront's product images. Public read is intended; the bucket holds no customer data and writes are blocked by bucket policy.",
+    "accepted_by": "J. Okafor, Head of Engineering, Acme Retail",
+    "expires": "2026-12-31"
+  },
+  {
+    "fingerprint": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/rds:snapshot/rds:orders-2024-11-02",
+    "reason": "Kept as evidence for the orders migration audit until the auditors sign off.",
+    "accepted_by": "M. Lindqvist, Finance, Acme Retail",
+    "expires": "2026-06-15"
+  }
+]

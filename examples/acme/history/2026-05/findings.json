@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "generated_at": "2026-06-03T09:00:00Z",
   "tenant": "Northwind Cloud Services",
   "account": {
@@ -467,30 +467,6 @@
       "status": "open"
     },
     {
-      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/rds:snapshot/rds:orders-2024-11-02",
-      "source": "aws-orphan-finder",
-      "section": "cost",
-      "rule": "orphaned-resource",
-      "severity": "low",
-      "title": "Orphaned rds:snapshot rds:orders-2024-11-02 costs $11.05/month",
-      "detail": "manual snapshot of a deleted instance",
-      "recommendation": "Delete rds:orders-2024-11-02 after confirming no snapshot or restore depends on it.",
-      "resource": {
-        "provider": "aws",
-        "account": "123456789012",
-        "region": "eu-west-1",
-        "type": "rds:snapshot",
-        "id": "rds:orders-2024-11-02"
-      },
-      "monthly_cost_usd": 11.05,
-      "evidence": {
-        "age_days": "601",
-        "reason": "manual snapshot of a deleted instance"
-      },
-      "first_seen": "2026-03-04T09:00:00Z",
-      "status": "open"
-    },
-    {
       "id": "k8s-rightsize:over-provisioned-workload:k8s/k8s:Deployment/acme-prod-eu-west-1/web/Deployment/frontend",
       "source": "k8s-rightsize",
       "section": "cost",
@@ -631,6 +607,37 @@
       },
       "first_seen": "2026-04-02T09:00:00Z",
       "status": "open"
+    }
+  ],
+  "accepted": [
+    {
+      "id": "aws-orphan-finder:orphaned-resource:aws/eu-west-1/rds:snapshot/rds:orders-2024-11-02",
+      "source": "aws-orphan-finder",
+      "section": "cost",
+      "rule": "orphaned-resource",
+      "severity": "low",
+      "title": "Orphaned rds:snapshot rds:orders-2024-11-02 costs $11.05/month",
+      "detail": "manual snapshot of a deleted instance",
+      "recommendation": "Delete rds:orders-2024-11-02 after confirming no snapshot or restore depends on it.",
+      "resource": {
+        "provider": "aws",
+        "account": "123456789012",
+        "region": "eu-west-1",
+        "type": "rds:snapshot",
+        "id": "rds:orders-2024-11-02"
+      },
+      "monthly_cost_usd": 11.05,
+      "evidence": {
+        "age_days": "601",
+        "reason": "manual snapshot of a deleted instance"
+      },
+      "first_seen": "2026-03-04T09:00:00Z",
+      "status": "open",
+      "acceptance": {
+        "reason": "Kept as evidence for the orders migration audit until the auditors sign off.",
+        "accepted_by": "M. Lindqvist, Finance, Acme Retail",
+        "expires": "2026-06-15T00:00:00Z"
+      }
     }
   ],
   "narrative": "",

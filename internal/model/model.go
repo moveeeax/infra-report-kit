@@ -14,7 +14,11 @@ import (
 )
 
 // SchemaVersion is the version of the findings document produced by this build.
-const SchemaVersion = 1
+//
+// Version 2 added the accepted-risk list. A version 1 build reading a version 2
+// file would see accepted findings vanish and report them as resolved, with
+// their dollars counted as savings, so the bump is deliberate.
+const SchemaVersion = 2
 
 // Section is the top-level chapter of the report a finding belongs to.
 type Section string
@@ -139,6 +143,36 @@ type Finding struct {
 	FirstSeen time.Time `json:"first_seen,omitempty"`
 	// Status is filled in by the delta engine: new, open or resolved.
 	Status Status `json:"status,omitempty"`
+	// Acceptance is set when the finding matches an entry in the tenant's
+	// accepted-risk register. Active acceptances live in Report.Accepted; an
+	// expired one stays on the finding in Report.Findings so the page can say
+	// it is due for re-review.
+	Acceptance *Acceptance `json:"acceptance,omitempty"`
+}
+
+// Accepted reports whether the client has accepted this risk and the
+// acceptance has not expired.
+func (f Finding) Accepted() bool { return f.Acceptance != nil && !f.Acceptance.Expired }
+
+// NeedsReReview reports whether the finding was accepted and the acceptance
+// has run out.
+func (f Finding) NeedsReReview() bool { return f.Acceptance != nil && f.Acceptance.Expired }
+
+// Acceptance is a client's decision to live with a finding until a date.
+type Acceptance struct {
+	Reason     string `json:"reason"`
+	AcceptedBy string `json:"accepted_by"`
+	// Expires is the last day the acceptance holds, at 00:00 UTC. It still
+	// holds for the whole of that day.
+	Expires time.Time `json:"expires"`
+	// Expired is true when the report was generated after Expires.
+	Expired bool `json:"expired,omitempty"`
+}
+
+// ExpiredAt reports whether the acceptance has run out at t. The expiry day
+// itself is still covered.
+func (a Acceptance) ExpiredAt(t time.Time) bool {
+	return !t.Before(a.Expires.AddDate(0, 0, 1))
 }
 
 // Status describes a finding relative to the previous report.
@@ -244,8 +278,12 @@ type Report struct {
 	Cost          CostSummary `json:"cost"`
 	SLOs          []SLOResult `json:"slos,omitempty"`
 	Findings      []Finding   `json:"findings"`
-	Narrative     string      `json:"narrative,omitempty"`
-	Delta         *Delta      `json:"delta,omitempty"`
+	// Accepted holds findings covered by an active acceptance. They are kept
+	// out of Findings so severity totals, waste and section pages only count
+	// what the client still has to act on.
+	Accepted  []Finding `json:"accepted,omitempty"`
+	Narrative string    `json:"narrative,omitempty"`
+	Delta     *Delta    `json:"delta,omitempty"`
 }
 
 // Delta summarises movement against the previous report.
@@ -256,6 +294,16 @@ type Delta struct {
 	Resolved        int       `json:"resolved"`
 	ResolvedSavings float64   `json:"resolved_savings_usd"`
 	ResolvedList    []Finding `json:"resolved_findings,omitempty"`
+	// Accepted counts findings under an active acceptance this period. They
+	// are not part of New or Open.
+	Accepted int `json:"accepted"`
+	// NewlyAccepted lists findings accepted this period that were not
+	// accepted in the previous report.
+	NewlyAccepted []Finding `json:"newly_accepted,omitempty"`
+	// Reopened lists findings that were accepted in the previous report and
+	// are back among the open findings: the acceptance expired or was removed
+	// from the register.
+	Reopened []Finding `json:"reopened_findings,omitempty"`
 }
 
 // New returns an empty report stamped with the current schema version.
@@ -287,7 +335,8 @@ func (r *Report) Add(f Finding) {
 
 // Sort puts the whole report into a deterministic order.
 //
-// Findings go severity descending, then attached dollars descending, then ID.
+// Findings, and accepted findings separately, go severity descending, then
+// attached dollars descending, then ID.
 // The spend table goes alphabetically by service — adapters may build it from a
 // map, and Go map iteration order would otherwise reshuffle findings.json on
 // every run, making a regenerated report impossible to diff.
@@ -295,8 +344,13 @@ func (r *Report) Sort() {
 	sort.SliceStable(r.Cost.Services, func(i, j int) bool {
 		return r.Cost.Services[i].Service < r.Cost.Services[j].Service
 	})
-	sort.SliceStable(r.Findings, func(i, j int) bool {
-		a, b := r.Findings[i], r.Findings[j]
+	sortFindings(r.Findings)
+	sortFindings(r.Accepted)
+}
+
+func sortFindings(fs []Finding) {
+	sort.SliceStable(fs, func(i, j int) bool {
+		a, b := fs[i], fs[j]
 		if a.Severity.Rank() != b.Severity.Rank() {
 			return a.Severity.Rank() > b.Severity.Rank()
 		}
@@ -344,6 +398,17 @@ func (r *Report) SeverityCounts() map[Severity]int {
 		counts[f.Severity]++
 	}
 	return counts
+}
+
+// ReReviewCount is the number of open findings whose acceptance has expired.
+func (r *Report) ReReviewCount() int {
+	n := 0
+	for _, f := range r.Findings {
+		if f.NeedsReReview() {
+			n++
+		}
+	}
+	return n
 }
 
 // TopWaste returns the n findings with the largest attached monthly spend.

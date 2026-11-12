@@ -61,6 +61,7 @@
   .sev-info     { background: #6B7280; }
   .tag { display: inline-block; padding: .4mm 2mm; border: 1px solid #D1D5DB; border-radius: 2px; font-size: 7.5pt; color: #4B5563; text-transform: uppercase; letter-spacing: .04em; }
   .tag.new { border-color: var(--accent); color: var(--accent); }
+  .tag.rereview { border-color: #B91C1C; color: #B91C1C; }
   .cost { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
   .narrative { background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 2px; padding: 5mm; }
   .narrative h3, .narrative h4 { margin-top: .6em; }
@@ -118,6 +119,7 @@
         <tr><td><span class="badge sev-info">info</span></td><td class="num">{{count .Counts "info"}}</td></tr>
       </tbody>
     </table>
+    {{with .Report.Accepted}}<p class="muted">Accepted risks excluded from these totals: {{len .}}, listed in the appendix.</p>{{end}}
 
     {{with .Report.Delta}}
     <h3>Movement since {{if .PreviousPeriod}}{{.PreviousPeriod}}{{else}}the previous report{{end}}</h3>
@@ -125,6 +127,8 @@
       <strong>{{.New}}</strong> new, <strong>{{.Open}}</strong> still open,
       <strong class="ok">{{.Resolved}}</strong> resolved{{if gt .ResolvedSavings 0.0}},
       removing <strong class="ok">{{usd .ResolvedSavings}}</strong> of recurring monthly spend{{end}}.
+      {{if or .Accepted .Reopened}}<strong>{{.Accepted}}</strong> accepted, <strong>{{len .NewlyAccepted}}</strong> of them newly;
+      <strong class="bad">{{len .Reopened}}</strong> back from accepted to open.{{end}}
     </p>
     {{if .ResolvedList}}
     <table>
@@ -132,6 +136,19 @@
       <tbody>
       {{range .ResolvedList}}
         <tr><td>{{.Title}}</td><td class="num">{{if gt .MonthlyCostUSD 0.0}}{{usd .MonthlyCostUSD}}{{else}}—{{end}}</td></tr>
+      {{end}}
+      </tbody>
+    </table>
+    {{end}}
+    {{if or .NewlyAccepted .Reopened}}
+    <table>
+      <thead><tr><th>Acceptance changes since last report</th><th>Change</th></tr></thead>
+      <tbody>
+      {{range .NewlyAccepted}}
+        <tr><td>{{.Title}}</td><td>Accepted{{with .Acceptance}} until {{date .Expires}}{{end}}</td></tr>
+      {{end}}
+      {{range .Reopened}}
+        <tr><td>{{.Title}}</td><td class="bad">{{with .Acceptance}}Acceptance expired {{date .Expires}}{{else}}Acceptance withdrawn{{end}}</td></tr>
       {{end}}
       </tbody>
     </table>
@@ -210,6 +227,7 @@
           <span class="badge sev-{{.Severity}}">{{.Severity}}</span>
           <span class="title">{{.Title}}</span>
           {{if eq .Status "new"}}<span class="tag new">new</span>{{end}}
+          {{if .NeedsReReview}}<span class="tag rereview">re-review</span>{{end}}
           {{if gt .MonthlyCostUSD 0.0}}<span class="cost">{{usd .MonthlyCostUSD}}/mo</span>{{end}}
         </div>
         <div class="body">
@@ -218,6 +236,7 @@
             <dt>Resource</dt><dd>{{.Resource.Ref}}{{with .Resource.Name}} ({{.}}){{end}}</dd>
             <dt>Detected by</dt><dd>{{.Source}} / {{.Rule}}</dd>
             {{if eq .Status "open"}}<dt>Open for</dt><dd>{{ageDays $.Report .}} days</dd>{{end}}
+            {{if .NeedsReReview}}{{with .Acceptance}}<dt>Acceptance</dt><dd>Expired {{date .Expires}}. Accepted by {{.AcceptedBy}}: {{.Reason}}</dd>{{end}}{{end}}
             {{range $k, $v := .Evidence}}<dt>{{$k}}</dt><dd>{{$v}}</dd>{{end}}
           </dl>
           {{with .Recommendation}}<div class="rec">{{.}}</div>{{end}}
@@ -227,6 +246,25 @@
     {{else}}
       <p class="empty">No findings in this section for this period.</p>
     {{end}}
+  </section>
+  {{end}}
+
+  {{with .Report.Accepted}}
+  <section>
+    <h2>Appendix: accepted risks</h2>
+    <p>The client has accepted these findings until the date shown. They are not counted in the severity totals or the identified waste. Each one returns to the findings for re-review when its acceptance expires.</p>
+    <table>
+      <thead><tr><th>Severity</th><th>Finding</th><th>Reason</th><th>Accepted by</th><th>Expires</th></tr></thead>
+      <tbody>
+      {{range .}}
+        <tr>
+          <td><span class="badge sev-{{.Severity}}">{{.Severity}}</span></td>
+          <td>{{.Title}}<div class="muted">{{.Resource.Ref}}{{if gt .MonthlyCostUSD 0.0}} · {{usd .MonthlyCostUSD}}/mo{{end}}</div></td>
+          {{with .Acceptance}}<td>{{.Reason}}</td><td>{{.AcceptedBy}}</td><td class="num">{{date .Expires}}</td>{{else}}<td></td><td></td><td></td>{{end}}
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
   </section>
   {{end}}
 

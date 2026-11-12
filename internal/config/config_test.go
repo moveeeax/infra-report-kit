@@ -134,3 +134,15 @@ func TestLoadMissingFile(t *testing.T) {
 		t.Fatal("want an error for a missing config")
 	}
 }
+
+func TestAcceptedRegisterPathResolvesRelativeToTheConfig(t *testing.T) {
+	body := strings.Replace(validConfig, `"sources"`, `"accepted": "accepted.json", "sources"`, 1)
+	path := writeConfig(t, body)
+	cfg, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got, want := cfg.Resolve(cfg.Accepted), filepath.Join(filepath.Dir(path), "accepted.json"); got != want {
+		t.Errorf("accepted resolves to %q, want %q", got, want)
+	}
+}

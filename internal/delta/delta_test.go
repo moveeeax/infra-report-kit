@@ -171,3 +171,100 @@ func TestLoadReportRoundTrip(t *testing.T) {
 		t.Errorf("first_seen did not survive the round trip: %v", got.Findings[0].FirstSeen)
 	}
 }
+
+func accepted(f model.Finding, expires time.Time) model.Finding {
+	f.Acceptance = &model.Acceptance{Reason: "intended", AcceptedBy: "J. Okafor", Expires: expires}
+	return f
+}
+
+func TestNewlyAcceptedFindingIsNotResolved(t *testing.T) {
+	// Accepting a finding moves it out of the open list. It must not read as
+	// resolved, or the report claims a saving nobody made.
+	prev := report("2026-05", june, finding("bucket", 20, march, model.StatusOpen))
+	cur := report("2026-06", july)
+	cur.Accepted = []model.Finding{accepted(finding("bucket", 20, july, ""), july.AddDate(0, 6, 0))}
+	Apply(cur, prev)
+
+	d := cur.Delta
+	if d.Resolved != 0 || d.ResolvedSavings != 0 {
+		t.Fatalf("delta = %+v, want nothing resolved", d)
+	}
+	if d.New != 0 || d.Open != 0 || d.Accepted != 1 {
+		t.Fatalf("delta = %+v, want 0 new, 0 open, 1 accepted", d)
+	}
+	if len(d.NewlyAccepted) != 1 || d.NewlyAccepted[0].ID != "bucket" {
+		t.Fatalf("newly accepted = %+v", d.NewlyAccepted)
+	}
+	if cur.Accepted[0].Status != model.StatusOpen || !cur.Accepted[0].FirstSeen.Equal(march) {
+		t.Errorf("accepted finding = %+v, want open with first_seen carried forward", cur.Accepted[0])
+	}
+}
+
+func TestAcceptanceCarriedOverIsNotATransition(t *testing.T) {
+	prev := report("2026-05", june)
+	prev.Accepted = []model.Finding{accepted(finding("bucket", 0, march, model.StatusOpen), july.AddDate(0, 6, 0))}
+	cur := report("2026-06", july)
+	cur.Accepted = []model.Finding{accepted(finding("bucket", 0, july, ""), july.AddDate(0, 6, 0))}
+	Apply(cur, prev)
+
+	d := cur.Delta
+	if d.Accepted != 1 || len(d.NewlyAccepted) != 0 || len(d.Reopened) != 0 || d.Resolved != 0 {
+		t.Fatalf("delta = %+v, want 1 accepted and no transitions", d)
+	}
+}
+
+func TestExpiredAcceptanceReopens(t *testing.T) {
+	prev := report("2026-05", june)
+	prev.Accepted = []model.Finding{accepted(finding("snapshot", 11.05, march, model.StatusOpen), june.AddDate(0, 0, 12))}
+	lapsed := accepted(finding("snapshot", 11.05, july, ""), june.AddDate(0, 0, 12))
+	lapsed.Acceptance.Expired = true
+	cur := report("2026-06", july, lapsed)
+	Apply(cur, prev)
+
+	d := cur.Delta
+	if d.Open != 1 || d.New != 0 || d.Accepted != 0 {
+		t.Fatalf("delta = %+v, want the finding counted as open, not new", d)
+	}
+	if len(d.Reopened) != 1 || d.Reopened[0].ID != "snapshot" || !d.Reopened[0].NeedsReReview() {
+		t.Fatalf("reopened = %+v, want the lapsed acceptance", d.Reopened)
+	}
+	if !cur.Findings[0].FirstSeen.Equal(march) {
+		t.Errorf("first_seen = %v, want March carried through the accepted months", cur.Findings[0].FirstSeen)
+	}
+}
+
+func TestWithdrawnAcceptanceReopens(t *testing.T) {
+	prev := report("2026-05", june)
+	prev.Accepted = []model.Finding{accepted(finding("bucket", 0, march, model.StatusOpen), july.AddDate(0, 6, 0))}
+	cur := report("2026-06", july, finding("bucket", 0, july, ""))
+	Apply(cur, prev)
+
+	if len(cur.Delta.Reopened) != 1 || cur.Delta.Reopened[0].Acceptance != nil {
+		t.Fatalf("reopened = %+v, want the finding with no acceptance attached", cur.Delta.Reopened)
+	}
+}
+
+func TestAcceptedFindingThatDisappearsIsResolved(t *testing.T) {
+	prev := report("2026-05", june)
+	prev.Accepted = []model.Finding{accepted(finding("snapshot", 11.05, march, model.StatusOpen), july.AddDate(0, 6, 0))}
+	cur := report("2026-06", july)
+	Apply(cur, prev)
+
+	if cur.Delta.Resolved != 1 || cur.Delta.ResolvedSavings != 11.05 {
+		t.Fatalf("delta = %+v, want the deleted snapshot resolved with its saving", cur.Delta)
+	}
+}
+
+func TestApplyWithoutPreviousCountsAcceptedSeparately(t *testing.T) {
+	cur := report("2026-06", july, finding("a", 0, july, ""))
+	cur.Accepted = []model.Finding{accepted(finding("b", 0, july, ""), july.AddDate(0, 6, 0))}
+	Apply(cur, nil)
+
+	d := cur.Delta
+	if d.New != 1 || d.Accepted != 1 || len(d.NewlyAccepted) != 1 {
+		t.Fatalf("delta = %+v, want 1 new and 1 newly accepted", d)
+	}
+	if cur.Accepted[0].Status != model.StatusNew {
+		t.Errorf("accepted status = %q, want new", cur.Accepted[0].Status)
+	}
+}
